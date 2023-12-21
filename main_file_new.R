@@ -13,6 +13,27 @@ compute_accuracy <- function(predictions,true_labels){
   result <- mean(predictions==true_labels)
   return(result)
 }
+
+
+perturbate_y <- function(y,p_percent=5,set.seed=TRUE,seed=1234567){
+  if(set.seed){set.seed(seed)}
+  indexs <- which( sample(c(1,0),size=length(y),prob=c(p_percent/100,(100-p_percent)/100),replace=TRUE)==1)
+  length_indexs <- length(indexs)
+  y[indexs] <- sample(y, size=length_indexs)
+  return(y)
+}
+
+
+perturbate_x <- function(x,p_percent=5,set.seed=TRUE,seed=1234567){
+  if(set.seed){set.seed(seed)}
+  
+  for(k in seq_len(ncol(x))){
+    indexs <- which( sample(c(1,0),size=nrow(x),prob=c(p_percent/100,(100-p_percent)/100),replace=TRUE)==1)
+    length_indexs <- length(indexs)
+    x[indexs,k] <- sample(x[,k], size=length_indexs)
+   }
+  return(x)
+}
 ########
 
 
@@ -35,6 +56,8 @@ compute_accuracy <- function(predictions,true_labels){
 #install.packages("pmlbr")
 library(caret)
 library(Rweka)
+library(ranger)
+library(kknn)
 library(pmlbr)
 library(e1071)
 library(pROC)
@@ -63,10 +86,10 @@ for(k in seq_len(length(datasets))){
   x <- dat[,-n_col]
   y <- dat[,n_col]
   #cre_mod = cre(x, y, task = "class",eta=0.5,k=4,model_type="glmnet")
-  #y_perturbated <- perturbate_y(y)
-  #x_perturbated <- perturbate_x(x)
+  y_perturbated <- perturbate_y(y)
+  x_perturbated <- perturbate_x(x)
   folds <- compute_k_folds(n_row,k=10)
-  accuracy_tree <- rep(0,10)
+  accuracy_svm <- accuracy_tree <- rep(0,10)
   for(l in (1:10)){
     indexs <- which(folds==l)
     x_train <- x[-indexs,]
@@ -74,134 +97,43 @@ for(k in seq_len(length(datasets))){
 	x_test <- x[indexs,]
 	y_test <- y[indexs]
 	
-	#
-	svm_model <- train(x=x_train,y=y_train,method = 'svmLinear')
+	x_train_perturbated <- x_perturbated[-indexs,]
+	y_train_perturbated <- y_perturbated[-indexs]
+	x_test_perturbated <- x_perturbated[indexs,]
+	y_test_perturbated <- y_perturbated[indexs]
+	
+	
+	
+	### clean data
+	
+	svm_model <- train(x=x_train,y=as.factor(y_train),method = 'svmLinear')
+	accuracy_svm[l] <- compute_accuracy(predict(svm_model,x_test),y_test)
+	
 	tree_model <- train(x=x_train,y=as.factor(y_train),method = 'J48')
 	accuracy_tree[l] <- compute_accuracy(predict(tree_model,x_test),y_test)
+	
+	
+	rf_model <- train(x=x_train,y=y_train,method = 'ranger')
+	accuracy_rf[l]compute_accuracy(predict(rf_model,x_test),y_test)
+	
+	knn_model <- train(x=x_train,y=y_train,method ='kknn')
+	accuracy_knn[l] <- compute_accuracy(predict(knn_model,x_test),y_test)
+	
+	### perturbation in y
+	
+	svm_model <- train(x=x_train,y=as.factor(y_train_perturbated),method = 'svmLinear')
+	accuracy_svm_perturbated[l] <- compute_accuracy(predict(svm_model,x_test),y_test_perturbated)
+	
+	tree_model <- train(x=x_train,y=as.factor(y_train_perturbated),method = 'J48')
+	accuracy_tree_perturbated_y[l] <- compute_accuracy(predict(tree_model,x_test),y_test)
+	
+	
+	rf_model <- train(x=x_train,y=y_train_perturbated,method = 'ranger')
+	accuracy_rf_perturbated_y[l]compute_accuracy(predict(rf_model,x_test),y_test)
+	
+	knn_model <- train(x=x_train,y=y_train_perturbated,method ='kknn')
+	accuracy_knn_perturbated_y[l] <- compute_accuracy(predict(knn_model,x_test),y_test_perturbated)
 
 }
 
 
-
-      n_test <-round(metadat$n_instances/2)
-
-      i_test <- sample((1:metadat$n_instances),size=n_test)
-
-      x_test <- x[i_test,]
-      y_test <- y[i_test]
-
-      x_train <- x[- i_test,]
-      y_train <- y[- i_test]
-
-
-      m <- nrow(dat)
-
-      p <-ncol(dat)
-      #####
-      #####
-      #      SVM
-      #probs_svm <- probs_rpart <- rep(0,m)
-
-      for(l in (1:m)){
-
-        models_svm <- tune(svm, train.x=dat[-l,-p],train.y=dat$target[-l],
-                           ranges = list(gamma = 2^(-1:1), cost = 2^(2:4)),
-                           tunecontrol = tune.control(sampling = "fix"),best.model=TRUE,probability=TRUE,kernel="radial"
-        )
-
-        probs_svm[l] <- (predict(models_svm$best.model,dat[l,-p],probability=TRUE))#$probabilities[,2]
-
-
-
-
-        #ROC_svm <- roc(response = y_test,predictor = prediction_svm)
-
-
-        #####
-        #####
-        #      RPART
-
-
-        models_rpart <- tune.rpart(target~.,data=dat[-l,], minsplit = c(5,10,15))
-
-
-
-
-
-
-        probs_rpart[l] <- predict(models_rpart$best.model,dat[l,])
-      }
-
-      ROC_svm <- roc(response = dat$target,predictor = probs_svm)
-      ROC_rpart <- roc(response = dat$target,predictor = probs_rpart)
-
-      plot(ROC_svm)
-      lines(ROC_rpart,col="blue")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      ####
-      ####
-      #          RANDOMFOREST
-
-      x <- dat[,which(colnames(dat)!="target")]
-      y <- as.factor(dat[,which(colnames(dat)=="target")])
-
-      model_rf <- tuneRF( x = x ,y = y ,doBest=TRUE,stepFactor=1.5,plot=FALSE,improve=0.01,probability=TRUE)
-
-      #M <- randomForest(x = x,y=y)
-
-      prediction_rf <- model_rf$votes[,2]#/M$votes[,1]#model_rf$votes[,2]
-
-      ROC_rf <- roc(response = dat$target ,predictor = prediction_rf)#,levels=c("0","1"))
-
-
-      #####
-      #####
-      #####
-      # KNN
-
-      #models_knn <- tune.knn(x=x,y=y,data=data,k= (1:5), tunecontrol = tune.control(sampling = "boot"))
-      #models_knn$best.parameters$k
-
-      #model_knn <- gknn(target~.,data=dat,k= models_knn$best.parameters$k)#, l = 0, prob = TRUE, use.all = TRUE)
-
-
-      #obj <- tune(svm, Species~., data = iris,
-      #             ranges = list(gamma = 2^(-1:1), cost = 2^(2:4)),
-      #            tunecontrol = tune.control(sampling = "fix")
-      #          )
-
-
-      ###plots
-
-      ROC_svm <- roc(dat$target,probs_svm)
-      ROC_rpart <- roc(dat$target,probs_rpart)
-
-      plot(ROC_svm)
-      lines(ROC_rpart,col="blue")
-      lines(ROC_rf,col="cyan")
-
-
-
-
-  }
-}
