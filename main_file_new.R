@@ -47,9 +47,9 @@ perturbate_x <- function(x,p_percent=5,set.seed=TRUE,seed=1234567){
 #ELASTIC NET
 #KNN
 
-#LOGISTIC REGRESSION ? bzw. GLM
+#LOGISTIC REGRESSION ? bzw. GLM : Im Moment nicht
 
-# knn
+
 
 
 
@@ -79,6 +79,8 @@ for(k in seq_len(length(classification_dataset_names))){
 
 saveRDS(datasets,"datasets.RDS")
 
+
+methods <- c("svmLinear","svmRadial","J48","ranger","knn","glmnet","cre")
 for(k in seq_len(length(datasets))){
   dat <- datasets[[k]]
   n_row <- nrow(dat)
@@ -90,6 +92,12 @@ for(k in seq_len(length(datasets))){
   x_perturbated <- perturbate_x(x)
   folds <- compute_k_folds(n_row,k=10)
   accuracy_svm <- accuracy_tree <- rep(0,10)
+  
+  clean_accuracies <- array(0,c(10,7))
+  colnames(clean_accuracies) <- methods
+  accuracies_noisy_y <- accuracies
+  accuracies_noisy_x <- accuracies
+  
   for(l in (1:10)){
     indexs <- which(folds==l)
     x_train <- x[-indexs,]
@@ -106,6 +114,8 @@ for(k in seq_len(length(datasets))){
 	
 	### clean data
 	
+	
+	
 	svm_model <- train(x=x_train,y=as.factor(y_train),method = 'svmLinear')
 	accuracy_svm[l] <- compute_accuracy(predict(svm_model,x_test),y_test)
 	
@@ -118,6 +128,9 @@ for(k in seq_len(length(datasets))){
 	
 	knn_model <- train(x=x_train,y=y_train,method ='kknn')
 	accuracy_knn[l] <- compute_accuracy(predict(knn_model,x_test),y_test)
+	
+	
+	glmnet_model <- train(x=x_train,y=y_train,method ='glmnet')
 	
 	### perturbation in y
 	
