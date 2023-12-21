@@ -5,9 +5,14 @@ compute_k_folds <- function(n_row,k=10,set.seed=TRUE,seed=1234567){
   result <- rep((1:k),ceiling(n_row/k))
   result <- result[(1:n_row)]
   if(set.seed){set.seed(seed)}
-  return(sample(n_row))
+  return(sample(result))
  }
 
+
+compute_accuracy <- function(predictions,true_labels){
+  result <- mean(predictions==true_labels)
+  return(result)
+}
 ########
 
 
@@ -29,6 +34,7 @@ compute_k_folds <- function(n_row,k=10,set.seed=TRUE,seed=1234567){
 
 #install.packages("pmlbr")
 library(caret)
+library(Rweka)
 library(pmlbr)
 library(e1071)
 library(pROC)
@@ -60,6 +66,7 @@ for(k in seq_len(length(datasets))){
   #y_perturbated <- perturbate_y(y)
   #x_perturbated <- perturbate_x(x)
   folds <- compute_k_folds(n_row,k=10)
+  accuracy_tree <- rep(0,10)
   for(l in (1:10)){
     indexs <- which(folds==l)
     x_train <- x[-indexs,]
@@ -67,8 +74,10 @@ for(k in seq_len(length(datasets))){
 	x_test <- x[indexs,]
 	y_test <- y[indexs]
 	
-	
+	#
 	svm_model <- train(x=x_train,y=y_train,method = 'svmLinear')
+	tree_model <- train(x=x_train,y=as.factor(y_train),method = 'J48')
+	accuracy_tree[l] <- compute_accuracy(predict(tree_model,x_test),y_test)
 
 }
 
