@@ -88,15 +88,15 @@ for(k in seq_len(length(datasets))){
   x <- dat[,-n_col]
   y <- dat[,n_col]
   #cre_mod = cre(x, y, task = "class",eta=0.5,k=4,model_type="glmnet")
-  y_perturbated <- perturbate_y(y)
-  x_perturbated <- perturbate_x(x)
+  y_noisy <- perturbate_y(y)
+  x_noisy <- perturbate_x(x)
   folds <- compute_k_folds(n_row,k=10)
-  accuracy_svm <- accuracy_tree <- rep(0,10)
+  
   
   clean_accuracies <- array(0,c(10,7))
   colnames(clean_accuracies) <- methods
-  accuracies_noisy_y <- accuracies
-  accuracies_noisy_x <- accuracies
+  accuracies_noisy_y <- clean_accuracies
+  accuracies_noisy_x <- clean_accuracies
   
   for(l in (1:10)){
     indexs <- which(folds==l)
@@ -105,48 +105,44 @@ for(k in seq_len(length(datasets))){
 	x_test <- x[indexs,]
 	y_test <- y[indexs]
 	
-	x_train_perturbated <- x_perturbated[-indexs,]
-	y_train_perturbated <- y_perturbated[-indexs]
-	x_test_perturbated <- x_perturbated[indexs,]
-	y_test_perturbated <- y_perturbated[indexs]
+	x_train_noisy <- x_noisy[-indexs,]
+	y_train_noisy <- y_noisy[-indexs]
+	x_test_noisy <- x_noisy[indexs,]
+	y_test_noisy <- y_noisy[indexs]
 	
 	
 	
 	### clean data
 	
 	
-	
-	svm_model <- train(x=x_train,y=as.factor(y_train),method = 'svmLinear')
-	accuracy_svm[l] <- compute_accuracy(predict(svm_model,x_test),y_test)
-	
-	tree_model <- train(x=x_train,y=as.factor(y_train),method = 'J48')
-	accuracy_tree[l] <- compute_accuracy(predict(tree_model,x_test),y_test)
-	
-	
-	rf_model <- train(x=x_train,y=y_train,method = 'ranger')
-	accuracy_rf[l]compute_accuracy(predict(rf_model,x_test),y_test)
-	
-	knn_model <- train(x=x_train,y=y_train,method ='kknn')
-	accuracy_knn[l] <- compute_accuracy(predict(knn_model,x_test),y_test)
-	
-	
-	glmnet_model <- train(x=x_train,y=y_train,method ='glmnet')
-	
+	for(i in (1:6)){
+	   method <- methods[i]
+	   model <- train(x=x_train,y=as.factor(y_train),method = method)
+	   accuracy <- compute_accuracy(predict(model,x_test),y_test)
+	   clean_accuracies[l,i] <- accuracy
+	   print(c(method,accuracy))
+	 }
+	 
 	### perturbation in y
+	for(i in (1:6)){
+	   method <- methods[i]
+	   model <- train(x=x_train,y=as.factor(y_train_noisy),method = method)
+	   accuracy <- compute_accuracy(predict(model,x_test),y_test_noisy)
+	   accuracies_noisy_y[l,i] <- accuracy
+	   print(c(method,accuracy))
+	}
 	
-	svm_model <- train(x=x_train,y=as.factor(y_train_perturbated),method = 'svmLinear')
-	accuracy_svm_perturbated[l] <- compute_accuracy(predict(svm_model,x_test),y_test_perturbated)
-	
-	tree_model <- train(x=x_train,y=as.factor(y_train_perturbated),method = 'J48')
-	accuracy_tree_perturbated_y[l] <- compute_accuracy(predict(tree_model,x_test),y_test)
-	
-	
-	rf_model <- train(x=x_train,y=y_train_perturbated,method = 'ranger')
-	accuracy_rf_perturbated_y[l]compute_accuracy(predict(rf_model,x_test),y_test)
-	
-	knn_model <- train(x=x_train,y=y_train_perturbated,method ='kknn')
-	accuracy_knn_perturbated_y[l] <- compute_accuracy(predict(knn_model,x_test),y_test_perturbated)
+	### perturbation in x
+	for(i in (1:6)){
+	   method <- methods[i]
+	   model <- train(x=x_train_noisy,y=as.factor(y_train),method = method)
+	   accuracy <- compute_accuracy(predict(model,x_test_noisy),y_test)
+	   accuracies_noisy_x[l,i] <- accuracy
+	   print(c(method,accuracy))
+	}
+
 
 }
-
+}	
+	
 
