@@ -1,3 +1,17 @@
+## needed own functions:
+
+
+compute_k_folds <- function(n_row,k=10,set.seed=TRUE,seed=1234567){
+  result <- rep((1:k),ceiling(n_row/k))
+  result <- result[(1:n_row)]
+  if(set.seed){set.seed(seed)}
+  return(sample(n_row))
+ }
+
+########
+
+
+
 #Welche Methoden:
 
 
@@ -42,19 +56,19 @@ for(k in seq_len(length(datasets))){
   n_col <- ncol(dat)
   x <- dat[,-n_col]
   y <- dat[,n_col]
-  cre_mod = cre(x, y, task = "class",eta=0.5,k=4,model_type="glmnet")
-  y_perturbated <- perturbate_y(y)
-  x_perturbated <- perturbate_x(x)
-  folds <- compute_10_folds(n_row)
+  #cre_mod = cre(x, y, task = "class",eta=0.5,k=4,model_type="glmnet")
+  #y_perturbated <- perturbate_y(y)
+  #x_perturbated <- perturbate_x(x)
+  folds <- compute_k_folds(n_row,k=10)
   for(l in (1:10)){
     indexs <- which(folds==l)
-    x_train <- x[,-i]
-	y_train <- y[,-i]
-	x_test <- x[,i]
-	y_test <- y[,i]
+    x_train <- x[-indexs,]
+	y_train <- y[-indexs]
+	x_test <- x[indexs,]
+	y_test <- y[indexs]
 	
 	
-	method = 'svmLinear'
+	svm_model <- train(x=x_train,y=y_train,method = 'svmLinear')
 
 }
 
