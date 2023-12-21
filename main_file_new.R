@@ -15,7 +15,7 @@ compute_accuracy <- function(predictions,true_labels){
 }
 
 
-perturbate_y <- function(y,p_percent=5,set.seed=TRUE,seed=1234567){
+perturbate_y <- function(y,p_percent=20,set.seed=TRUE,seed=1234567){
   if(set.seed){set.seed(seed)}
   indexs <- which( sample(c(1,0),size=length(y),prob=c(p_percent/100,(100-p_percent)/100),replace=TRUE)==1)
   length_indexs <- length(indexs)
@@ -24,7 +24,7 @@ perturbate_y <- function(y,p_percent=5,set.seed=TRUE,seed=1234567){
 }
 
 
-perturbate_x <- function(x,p_percent=5,set.seed=TRUE,seed=1234567){
+perturbate_x <- function(x,p_percent=20,set.seed=TRUE,seed=1234567){
   if(set.seed){set.seed(seed)}
   
   for(k in seq_len(ncol(x))){
@@ -83,6 +83,7 @@ saveRDS(datasets,"datasets.RDS")
 methods <- c("svmLinear","svmRadial","J48","ranger","knn","glmnet","cre")
 for(k in seq_len(length(datasets))){
   dat <- datasets[[k]]
+  dim(dat)
   n_row <- nrow(dat)
   n_col <- ncol(dat)
   x <- dat[,-n_col]
