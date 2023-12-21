@@ -14,10 +14,12 @@
 
 
 #install.packages("pmlbr")
+library(caret)
 library(pmlbr)
 library(e1071)
 library(pROC)
 library(randomForest)
+library(kernlab)
 
 t <- 1
 datasets <- list()
@@ -44,6 +46,15 @@ for(k in seq_len(length(datasets))){
   y_perturbated <- perturbate_y(y)
   x_perturbated <- perturbate_x(x)
   folds <- compute_10_folds(n_row)
+  for(l in (1:10)){
+    indexs <- which(folds==l)
+    x_train <- x[,-i]
+	y_train <- y[,-i]
+	x_test <- x[,i]
+	y_test <- y[,i]
+	
+	
+	method = 'svmLinear'
 
 }
 
