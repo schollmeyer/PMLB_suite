@@ -80,6 +80,7 @@ for(k in seq_len(length(classification_dataset_names))){
 
 saveRDS(datasets,"datasets.RDS")
 
+
 # compared methods:
 methods <- c("svmLinear","svmRadial","J48","ranger","knn","glmnet","mlpML","cre")
 results <- array(0,c(length(datasets),3*length(methods)))
