@@ -84,7 +84,7 @@ saveRDS(datasets,"datasets.RDS")
 methods <- c("svmLinear","svmRadial","J48","ranger","knn","glmnet","mlpML","cre")
 results <- array(0,c(length(datasets),3*length(methods)))
 colnames(results) <- rep(methods,3)
-for(k in (2:length(datasets))){
+for(k in (19:length(datasets))){
   dat <- datasets[[k]]
   dim(dat)
   n_row <- nrow(dat)
