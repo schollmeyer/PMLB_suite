@@ -51,7 +51,8 @@ perturbate_x <- function(x,p_percent=20,set.seed=TRUE,seed=1234567){
 
 
 
-
+# for compressed rule ensemble classifier (CRE)
+source("make_method_cre.R")
 
 #install.packages("pmlbr")
 library(caret)
@@ -83,7 +84,11 @@ saveRDS(datasets,"datasets.RDS")
 
 
 # compared methods:
+<<<<<<< HEAD
 methods <- c("svmLinear","svmRadial","J48","ranger","knn","glmnet","mlpML","gbm","ada","blackboost")#cre")
+=======
+methods <- c("svmLinear","svmRadial","J48","ranger","knn","glmnet","mlpML","gbm","ada",cre)
+>>>>>>> 060cd1a91fd1166b6e5061de0db233797bb01237
 # results <- array(0,c(length(datasets),3*length(methods)))
 # colnames(results) <- rep(methods,3)
 
