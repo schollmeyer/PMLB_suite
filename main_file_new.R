@@ -85,8 +85,10 @@ saveRDS(datasets,"datasets.RDS")
 
 # compared methods:
 
-methods <- c("svmLinear","svmRadial","J48","ranger","knn","glmnet","mlpML","gbm","ada","blackboost","cre")
-###  letztendliche Entscheidung:  "svmRadial","J48","ranger","knn","glmnet", vs "cre"
+# alt: methods <- c("svmLinear","svmRadial","J48","ranger","knn","glmnet","mlpML","gbm","ada","blackboost","cre")
+###  letztendliche Entscheidung:
+
+methods <- c("svmRadial","J48","ranger","knn","glmnet","cre")
  results <- array(0,c(length(datasets),3*length(methods)))
 # colnames(results) <- rep(methods,3)
 
