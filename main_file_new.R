@@ -65,16 +65,18 @@ library(e1071)
 library(pROC)
 library(randomForest)
 library(kernlab)
-library(ada)
-library(gbm)
+#library(ada)
+#library(gbm)
 t <- 1
 datasets <- list()
+metadats <- list()
 for(k in seq_len(length(classification_dataset_names))){
   index <- which(summary_stats[,1]==classification_dataset_names[k])
   metadat <- summary_stats[index,]
-  if( metadat$n_instances %in% c(10:2000) & metadat$n_classes==2 & metadat$task== "classification"){
+  if( metadat$n_instances %in% c(10:1000) & metadat$n_classes==2 & metadat$task== "classification" & metadat$n_features <=100){
       dat <- fetch_data(classification_dataset_names[k])
       datasets[[t]] <- dat
+	  metadats[[t]] <- metadat
       print(t)
       t <- t+1
   }
@@ -97,20 +99,20 @@ methods <- c("svmRadial","J48","ranger","knn","glmnet","cre")
 
 # es fehlt k=42 fuer gbm
 # dataset fuer k=31 sehr gross
-for(k in (1:75)[-31]){#length(datasets))){
+for(k in seq_len(length(datasets))){
   dat <- datasets[[k]]
   dim(dat)
   n_row <- nrow(dat)
   n_col <- ncol(dat)
   x <- dat[,-n_col]
   y <- dat[,n_col]
-  if(k==18){x <- dat[,-1];y <- dat[,1]}
+  if(colnames(dat)[n_col]!="target"){print("error")}
   y_noisy <- perturbate_y(y)
   x_noisy <- perturbate_x(x)
   folds <- compute_k_folds(n_row,k=10)
 
 
-  clean_accuracies <- array(0,c(11,11))
+  clean_accuracies <- array(0,c(10,length(methods)))
   colnames(clean_accuracies) <- methods
   accuracies_noisy_y <- clean_accuracies
   accuracies_noisy_x <- clean_accuracies
@@ -137,7 +139,7 @@ for(k in (1:75)[-31]){#length(datasets))){
 	### clean data
 
 
-	for(i in (1:11)){
+	for(i in seq_len(length(methods))){
 	   method <- methods[i]
 	   model <- caret::train(x=x_train,y=as.factor(y_train),method = method)
 	   accuracy <- compute_accuracy(predict(model,x_test),y_test)
@@ -146,7 +148,7 @@ for(k in (1:75)[-31]){#length(datasets))){
 	 }
 
 	### perturbation in y
-	for(i in (1:11)){
+	for(i in seq_len(length(methods))){
 	   method <- methods[i]
 	   model <- caret::train(x=x_train,y=as.factor(y_train_noisy),method = method)
 	   accuracy <- compute_accuracy(predict(model,x_test),y_test_noisy)
@@ -155,7 +157,7 @@ for(k in (1:75)[-31]){#length(datasets))){
 	}
 
 	### perturbation in x
-	for(i in (1:11)){
+	for(i in seq_len(length(methods))){
 	   method <- methods[i]
 	   model <- caret::train(x=x_train_noisy,y=as.factor(y_train),method = method)
 	   accuracy <- compute_accuracy(predict(model,x_test_noisy),y_test)
