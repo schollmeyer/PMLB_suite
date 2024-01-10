@@ -104,9 +104,9 @@ for(k in seq_len(length(datasets))){
   dim(dat)
   n_row <- nrow(dat)
   n_col <- ncol(dat)
-  x <- dat[,-n_col]
-  y <- dat[,n_col]
-  if(colnames(dat)[n_col]!="target"){print("error")}
+  target_index <- which(colnames(dat)=="target")
+  x <- dat[,-target_index]
+  y <- dat[,target_index]
   y_noisy <- perturbate_y(y)
   x_noisy <- perturbate_x(x)
   folds <- compute_k_folds(n_row,k=10)
@@ -121,7 +121,6 @@ for(k in seq_len(length(datasets))){
   print("k:")
   print(k)
   print("##############")
-  print(max(results[k,]))
   for(l in (1:10)){
     indexs <- which(folds==l)
     x_train <- x[-indexs,]
@@ -144,8 +143,13 @@ for(k in seq_len(length(datasets))){
 	   model <- caret::train(x=x_train,y=as.factor(y_train),method = method)
 	   accuracy <- compute_accuracy(predict(model,x_test),y_test)
 	   clean_accuracies[l,i] <- accuracy
-	   print(c(method,accuracy))
+	   print(c("clean",method,accuracy))
+	   
+	   accuracies_noisy_y[l,i] <- accuracy
 	 }
+	 
+	 model <- caret::train(x=x_train,y=as.factor(y_train),method = cre)
+	   accuracy <- compute_accuracy(predict(model,x_test),y_test)
 
 	### perturbation in y
 	for(i in seq_len(length(methods))){
